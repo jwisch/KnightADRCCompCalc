@@ -1,0 +1,2 @@
+# KnightADRCCompCalc
+Calculates Cognitive Composites
