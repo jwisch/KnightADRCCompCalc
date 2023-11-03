@@ -1,0 +1,134 @@
+---
+title: "examples"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{examples}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(KnightADRCCompCalc)
+```
+## Workflow
+
+The package workflow is:
+
+ * Load raw data
+ * Convert scores to score-equivalents if necessary
+ * Get baseline scores for cdr = 0 participants and use them for norming
+ * Z score all scores based off of the baseline cohort
+ * Calculate composite scores by getting an average of the relevant tests (and counting NAs)
+ 
+### Load raw data
+
+The package has synthetic data if you aren't able to load in actual Knight ADRC data
+It is formatted to correspond to the datafreeze that was released in the summer of 2023
+
+```{r loadData}
+data("synthetic_mod_b4_cdr")
+data("synthetic_mod_psychometrics")
+
+df <- merge(df, df1, by = c("ID", "TESTDATE"), all = TRUE)
+rm(df1)
+
+```
+
+### Convert scores to score-equivalents
+
+```{r convert}
+df$MMSE_eq <- MoCA2MMSE(df$mocatots)
+df$MMSE_eq <- ifelse(!is.na(df$MMSE), df$MMSE, df$MMSE_eq) #coalescing and preferentially keeping non-converted score if available
+
+df$mlnt_eq <- mlnt2BNT(df$minttots)
+df$mlnt_eq <- ifelse(!is.na(df$bnt), df$bnt / 2, df$mlnt_eq) #dividing by two because values in DF21 are doubled for bnt
+
+df$MEMUNITS_eq <- craft2MEMUNITS(df$craftdre)
+df$MEMUNITS_eq <- ifelse(!is.na(df$MEMUNITS), df$MEMUNITS, df$MEMUNITS_eq) #coalescing and preferentially keeping non-converted score if available
+
+df$DIGIF_eq <- digforct2DIGIF(df$digfor)
+df$DIGIF_eq <- ifelse(!is.na(df$DIGIF), df$DIGIF, df$DIGIF_eq) #coalescing and preferentially keeping non-converted score if available
+
+df$DIGIB_eq <- digbacct2DIGIB(df$digback)
+df$DIGIB_eq <- ifelse(!is.na(df$DIGIB), df$DIGIB, df$DIGIB_eq) #coalescing and preferentially keeping non-converted score if available 
+
+df$TrailA_eq <- get_TRAILSA(df$tma, df$TRAILA)
+df$TrailB_eq <- get_TRAILSB(df$tmb, df$TRAILB)
+```
+
+### Norm Scores
+
+In order to norm scores, you want to subset your dataframe down to ONLY the IDs that will be included in your analysis. Then you can use the get_baselineCohort function to filter your dataframe down to only the first visit for cdr = 0 participants. This is the cohort that will be used for calculating baseline means and standard deviations for z scoring
+
+```{r NormPart1}
+df_baseline <- get_baselineCohort(df)
+
+```
+
+After getting the baseline cohort, then you supply 2 vectors to get_normedScore, the baseline cohort score on the test of interest and the entire cohort score on the tests of interest. get_normedScore will z score the test scores. Note that for Trails A and B you need to multiply by -1 since a higher score is "worse" on trails a and b.
+
+```{r NormPart2}
+df$z_MMSE_eq <- get_normedScore(df_baseline$MMSE_eq, df$MMSE_eq)
+df$z_mlnt_eq <- get_normedScore(df_baseline$mlnt_eq, df$mlnt_eq)
+df$z_MEMUNITS_eq <- get_normedScore(df_baseline$MEMUNITS_eq, df$MEMUNITS_eq)
+df$z_DIGIF_eq <- get_normedScore(df_baseline$DIGIF_eq, df$DIGIF_eq)
+df$z_DIGIB_eq <- get_normedScore(df_baseline$DIGIB_eq, df$DIGIB_eq)
+df$z_TrailA_eq <- get_normedScore(df_baseline$TrailA_eq, df$TrailA_eq) * -1 #REVERSE THE ORDER
+df$z_TrailB_eq <- get_normedScore(df_baseline$TrailB_eq, df$TrailB_eq) * -1 #REVERSE THE ORDER
+df$z_craftdre <- get_normedScore(df_baseline$craftdre, df$craftdre)
+df$z_asscmem <- get_normedScore(df_baseline$asscmem, df$asscmem)
+df$z_srtfree <- get_normedScore(df_baseline$srtfree, df$srtfree)
+df$z_animals <- get_normedScore(df_baseline$ANIMALS, df$ANIMALS)
+df$z_veg <- get_normedScore(df_baseline$VEG, df$VEG)
+df$z_digsym <- get_normedScore(df_baseline$digsym, df$digsym)
+df$z_switchmixed <- get_normedScore(df_baseline$switchmixed, df$switchmixed)
+df$z_lettnum <- get_normedScore(df_baseline$lettnum, df$lettnum)
+
+```
+
+### Calculate Composites
+
+Finally, you can use the calculators to add up the composite scores
+
+```{r}
+GlobalComposite <- get_GlobalComposite(df, id_col_name = "ID", visit_date_col_name = "TESTDATE",
+                                                   craftdel_col_name = "z_craftdre", 
+                                                    asscmem_col_name = "z_asscmem", 
+                                                    srtfree_col_name = "z_srtfree",
+                                                   animals_col_name = "z_animals", 
+                                                    mlnt_col_name = "z_mlnt_eq", 
+                                                    veg_col_name = "z_veg",
+                                                   tma_col_name = "z_TrailA_eq", 
+                                                  tmb_col_name = "z_TrailB_eq", 
+                                                  digsym_col_name = "z_digsym",
+                                                   switch_col_name = "z_switchmixed", 
+                                                    digb_col_name = "z_DIGIB_eq", 
+                                                    digf_col_name = "z_DIGIF_eq",
+                                                   lettnum_col_name = "z_lettnum")
+```
+
+Note that if you used the same naming convention as the package defaults (which are shown above), you don't have to plug in all the variable names. Just supply the dataframe.
+
+```{r}
+GlobalComposite <- get_GlobalComposite(df) 
+EMComposite <- get_EpisodicMemoryComposite(df)
+AttnComposite <- get_AttentionComposite(df)
+WMComposite <- get_WorkingMemoryComposite(df)
+KnightPACC <- get_KnightPACC(df)
+ADCSPACC <- get_ADCSPACC(df)
+```
+
+If you mostly used the same naming convention as the package defaults but have one variable name that doesn't correspond, you can supply that one specifically
+
+```{r}
+SMComposite <- get_SemanticMemoryComposite(df, veg_col_name = "z_veg") 
+```
+
+
