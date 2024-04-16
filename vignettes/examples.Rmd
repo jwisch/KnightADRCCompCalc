@@ -53,10 +53,10 @@ df$mlnt_eq <- ifelse(!is.na(df$BOSTON), df$BOSTON, df$mlnt_eq) #coalescing and p
 df$MEMUNITS_eq <- craft2MEMUNITS(df$craftdre)
 df$MEMUNITS_eq <- ifelse(!is.na(df$MEMUNITS), df$MEMUNITS, df$MEMUNITS_eq) #coalescing and preferentially keeping non-converted score if available
 
-df$DIGIF_eq <- digforct2DIGIF(df$digfor)
+df$DIGIF_eq <- digforct2DIGIF(df$digforct)
 df$DIGIF_eq <- ifelse(!is.na(df$DIGIF), df$DIGIF, df$DIGIF_eq) #coalescing and preferentially keeping non-converted score if available
 
-df$DIGIB_eq <- digbacct2DIGIB(df$digback)
+df$DIGIB_eq <- digbacct2DIGIB(df$digbacct)
 df$DIGIB_eq <- ifelse(!is.na(df$DIGIB), df$DIGIB, df$DIGIB_eq) #coalescing and preferentially keeping non-converted score if available 
 
 df$TrailA_eq <- get_TRAILSA(df$tma, df$TRAILA)
