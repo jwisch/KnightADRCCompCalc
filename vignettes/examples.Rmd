@@ -47,8 +47,8 @@ rm(df1)
 df$MMSE_eq <- MoCA2MMSE(df$mocatots)
 df$MMSE_eq <- ifelse(!is.na(df$MMSE), df$MMSE, df$MMSE_eq) #coalescing and preferentially keeping non-converted score if available
 
-df$mlnt_eq <- mlnt2BNT(df$minttots)
-df$mlnt_eq <- ifelse(!is.na(df$bnt), df$bnt / 2, df$mlnt_eq) #dividing by two because values in DF21 are doubled for bnt
+df$mlnt_eq <- mlnt2BOSTON(df$minttots)
+df$mlnt_eq <- ifelse(!is.na(df$BOSTON), df$BOSTON, df$mlnt_eq) #coalescing and preferentially keeping non-converted score if available
 
 df$MEMUNITS_eq <- craft2MEMUNITS(df$craftdre)
 df$MEMUNITS_eq <- ifelse(!is.na(df$MEMUNITS), df$MEMUNITS, df$MEMUNITS_eq) #coalescing and preferentially keeping non-converted score if available

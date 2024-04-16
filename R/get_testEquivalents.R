@@ -27,9 +27,9 @@ MoCA2MMSE <- function(MoCA){
 #' @return boston naming test scores as vector
 #' @export
 #' @examples
-#' minttots2BNT(c(23,124,53))
+#' mlnt2BOSTON(c(23,124,53))
 
-mlnt2BNT <- function(mlnttots){
+mlnt2BOSTON <- function(mlnttots){
   data(MINT_bostonNaming)
   df <- data.frame("MINT" = mlnttots)
   df$MINT <- as.numeric(df$MINT)
@@ -42,8 +42,8 @@ mlnt2BNT <- function(mlnttots){
 
 #' convert Craft to logical memory iia
 #' Crosswalks from Monsell et al, 2016 DOI: 10.1097/WAD.0000000000000111
-#' @param mlnttots multilingual naming scores as vector
-#' @return boston naming test scores as vector
+#' @param craft craft scores as vector
+#' @return logical memory test scores as vector
 #' @export
 #' @examples
 #' craft2MEMUNITS(c(23,124,53))
